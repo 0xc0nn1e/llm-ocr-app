@@ -10,5 +10,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
 
+    # Max upload size in bytes (default 10 MB). Override via MAX_FILE_SIZE env.
+    max_file_size: int = 10 * 1024 * 1024
 
 settings = Settings()
