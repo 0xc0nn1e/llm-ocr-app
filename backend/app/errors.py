@@ -15,15 +15,12 @@ class ErrorCode(str, Enum):
     UNSUPPORTED_FILE_TYPE = "UNSUPPORTED_FILE_TYPE"
     EMPTY_FILE = "EMPTY_FILE"
     FILE_TOO_LARGE = "FILE_TOO_LARGE"
+    PROVIDER_ERROR = "PROVIDER_ERROR"
+    INVALID_RESPONSE = "INVALID_RESPONSE"
 
 
 class AppError(Exception):
-    """Base application error carrying an ErrorCode and a Japanese message.
 
-    Routers catch this and translate it into a structured HTTP response.
-    """
-
-    # Subclasses set these.
     code: ErrorCode
     http_status: int
 
@@ -45,3 +42,16 @@ class EmptyFile(AppError):
 class FileTooLarge(AppError):
     code = ErrorCode.FILE_TOO_LARGE
     http_status = 400
+
+class ProviderError(AppError):
+    """The LLM provider call failed (network, API error, etc.)."""
+
+    code = ErrorCode.PROVIDER_ERROR
+    http_status = 502
+
+
+class InvalidResponse(AppError):
+    """The provider returned data that doesn't match the expected schema."""
+
+    code = ErrorCode.INVALID_RESPONSE
+    http_status = 502
