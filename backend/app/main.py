@@ -3,11 +3,12 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.errors import AppError
-from app.routers import upload
+from app.routers import upload, analyze
 
 app = FastAPI(title="画像OCR・説明文生成API")
 
 app.include_router(upload.router)
+app.include_router(analyze.router)
 
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
