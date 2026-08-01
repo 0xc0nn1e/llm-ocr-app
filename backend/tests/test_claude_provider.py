@@ -75,3 +75,33 @@ def test_analyze_image_raises_on_bad_schema(mock_anthropic_cls):
     provider = ClaudeProvider()
     with pytest.raises(InvalidResponse):
         provider.analyze_image(b"fake-image-bytes", "image/png")
+
+@patch("app.providers.claude.Anthropic")
+def test_analyze_images_handles_multiple_pages(mock_anthropic_cls):
+    """Multiple images are sent in a single request and parsed correctly."""
+    fake_message = _fake_tool_use_message(
+        {
+            "ocr": "1ページ目\n2ページ目",
+            "description": "2ページの文書です。",
+            "tags": ["文書", "複数ページ"],
+            "alt": "2ページの文書画像",
+        }
+    )
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = fake_message
+    mock_anthropic_cls.return_value = mock_client
+
+    from app.providers.claude import ClaudeProvider
+
+    provider = ClaudeProvider()
+    result = provider.analyze_images(
+        [b"page1-bytes", b"page2-bytes"], "image/png"
+    )
+
+    assert isinstance(result, AnalysisResult)
+    assert "1ページ目" in result.ocr
+    # Verify the request included both images as content blocks.
+    call_args = mock_client.messages.create.call_args
+    content = call_args.kwargs["messages"][0]["content"]
+    image_blocks = [b for b in content if b["type"] == "image"]
+    assert len(image_blocks) == 2

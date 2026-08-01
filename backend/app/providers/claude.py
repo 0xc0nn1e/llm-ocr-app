@@ -1,6 +1,9 @@
-"""Claude (Anthropic) provider: analyzes an image and returns structured data."""
-"""https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/python"""
-"""https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"""
+"""Claude (Anthropic) provider: analyzes an image and returns structured data.
+
+References:
+    https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/python
+    https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview
+"""
 
 
 import base64
@@ -22,11 +25,11 @@ _ANALYSIS_TOOL = {
         "properties": {
             "ocr": {
                 "type": "string",
-                "description": "ファイル内の文字を抽出したテキスト（日本語）",
+                "description": "ファイル内の文字を抽出したテキスト（日本語）。複数ページの場合はページごとに区切って記載してください。",
             },
             "description": {
                 "type": "string",
-                "description": "ファイルに何が写っている/書かれているかの説明（日本語）",
+                "description": "ファイルに何が写っている/書かれているかの説明（日本語）。複数ページがある場合は全体を総合して説明してください。",
             },
             "tags": {
                 "type": "array",
@@ -45,6 +48,8 @@ _ANALYSIS_TOOL = {
 _SYSTEM_PROMPT = (
     "あなたは画像やドキュメントを解析するアシスタントです。"
     "アップロードされたファイルから文字を抽出（OCR）し、内容を説明してください。"
+    "複数ページ・複数画像が提供された場合は、すべてのページを確認したうえで"
+    "総合的に解析してください。"
     "必ず report_analysis ツールを使って結果を返してください。"
     "OCR・説明・代替テキストはすべて日本語で記述してください。"
 )
@@ -62,19 +67,44 @@ class ClaudeProvider:
         self._max_tokens = settings.anthropic_max_tokens
 
     def analyze_image(self, image_bytes: bytes, media_type: str) -> AnalysisResult:
-
-
-        """Analyze a single image and return structured results.
+        """Analyze a single image. Kept for backward compatibility; delegates
+        to analyze_images with a single-item list.
+        """
+        return self.analyze_images([image_bytes], media_type)
+    
+    def analyze_images(
+        self, images: list[bytes], media_type: str
+    ) -> AnalysisResult:
+        """Analyze one or more images (e.g. PDF pages) as a single document.
 
         Args:
-            image_bytes: Raw bytes of the image.
-            media_type: e.g. "image/png" or "image/jpeg".
+            images: List of image bytes, in order (e.g. page 1, 2, 3...).
+            media_type: e.g. "image/png" or "image/jpeg" (same for all).
 
         Raises:
             ProviderError: if the API call fails.
             InvalidResponse: if Claude's output can't be parsed into schema.
         """
-        b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
+        # Build one content block per image, followed by the instruction text.
+        content = []
+        for img in images:
+            b64 = base64.standard_b64encode(img).decode("utf-8")
+            content.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": media_type,
+                        "data": b64,
+                    },
+                }
+            )
+        instruction = (
+            "このファイルを解析してください。"
+            if len(images) == 1
+            else f"この{len(images)}ページの文書を解析してください。"
+        )
+        content.append({"type": "text", "text": instruction})
 
         try:
             message = self._client.messages.create(
@@ -82,57 +112,27 @@ class ClaudeProvider:
                 max_tokens=self._max_tokens,
                 system=_SYSTEM_PROMPT,
                 tools=[_ANALYSIS_TOOL],
-                # Force Claude to use our tool (guarantees structured output).
                 tool_choice={"type": "tool", "name": "report_analysis"},
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": media_type,
-                                    "data": b64,
-                                },
-                            },
-                            {
-                                "type": "text",
-                                "text": "このファイルを解析してください。",
-                            },
-                        ],
-                    }
-                ],
+                messages=[{"role": "user", "content": content}],
             )
         except APIError as e:
             logger.error("Anthropic API call failed: %s", e)
-            # Return a clean, user-facing message (no internal details leaked).
             raise ProviderError(
                 "LLM API の呼び出しに失敗しました。時間をおいて再度お試しください。"
             )
 
-        # Extract the tool_use block that carries the structured arguments.
-        # check the return value have been used the tool or not
-       
-        """
-        Sample rtn from claude api
-        [
-
-            TextBlock(type="text", text="承知しました。画像を解析します。"),
-
-            ToolUseBlock(
-                type="tool_use",
-                id="toolu_01A2b3C4d5E6f7G8h9",
-                name="report_analysis",
-                input={
-                    "ocr": "営業中",
-                    "description": "「営業中」と書かれた店舗の看板の画像です。赤地に白い文字で書かれています。",
-                    "tags": ["看板", "営業中", "店舗", "サイン"],
-                    "alt": "営業中と書かれた赤い看板"
-                }
+        # Detect truncation: if the model hit the output limit, the tool
+        # arguments will be incomplete (often an empty dict).
+        if message.stop_reason == "max_tokens":
+            logger.error(
+                "LLM output truncated (stop_reason=max_tokens, limit=%s)",
+                self._max_tokens,
             )
-        ]
-        """
+            raise InvalidResponse(
+                "ファイルの内容が長すぎるため、解析結果を取得できませんでした。"
+                "ページ数の少ないファイルでお試しください。"
+            )
+
         tool_input = None
         for block in message.content:
             if block.type == "tool_use" and block.name == "report_analysis":
@@ -140,11 +140,11 @@ class ClaudeProvider:
                 break
 
         if tool_input is None:
+            logger.error("No tool_use block in LLM response")
             raise InvalidResponse("LLM から想定した形式の応答が得られませんでした。")
 
         try:
-            # Validate against our schema; raises if fields are wrong/missing.
             return AnalysisResult.model_validate(tool_input)
         except Exception as e:
-            logger.error("Failed to parse LLM response: %s", e)
-            raise InvalidResponse("LLM 応答の解析に失敗しました。")
+            logger.error("Failed to validate LLM response: %s", e)
+            raise InvalidResponse("LLM 応答の形式が不正です。")

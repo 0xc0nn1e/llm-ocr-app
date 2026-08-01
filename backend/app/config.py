@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     # Claude model to use. Override via ANTHROPIC_MODEL env if needed.
     anthropic_model: str = "claude-sonnet-4-6"
-    anthropic_max_tokens: int = 2048
+    anthropic_max_tokens: int = 8192
+    max_pdf_pages: int = 10
 
 settings = Settings()

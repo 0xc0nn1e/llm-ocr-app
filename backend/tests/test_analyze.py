@@ -26,7 +26,7 @@ def test_analyze_returns_result(mock_provider_cls):
     """A valid image returns the provider's analysis result."""
     # Mock the provider to return a fixed result (no real API call).
     mock_provider = mock_provider_cls.return_value
-    mock_provider.analyze_image.return_value = AnalysisResult(
+    mock_provider.analyze_images.return_value = AnalysisResult(
         ocr="テスト文字",
         description="これはテスト画像です。",
         tags=["テスト", "画像"],
@@ -53,4 +53,4 @@ def test_analyze_rejects_unsupported_type(mock_provider_cls):
     body = res.json()
     assert body["error"]["code"] == "UNSUPPORTED_FILE_TYPE"
     # Provider must NOT be called when validation fails.
-    mock_provider_cls.return_value.analyze_image.assert_not_called()
+    mock_provider_cls.return_value.analyze_images.assert_not_called()
