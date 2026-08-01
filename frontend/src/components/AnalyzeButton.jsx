@@ -1,4 +1,4 @@
-function AnalyzeButton({ onClick, isLoading, disabled }) {
+function AnalyzeButton({ onClick, isLoading, disabled, label = "解析する" }) {
   return (
     <button
       className="analyze-button"
@@ -11,7 +11,7 @@ function AnalyzeButton({ onClick, isLoading, disabled }) {
           解析中...
         </span>
       ) : (
-        "解析する"
+        label
       )}
     </button>
   );

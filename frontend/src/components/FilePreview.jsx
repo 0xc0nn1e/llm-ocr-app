@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 
 function FilePreview({ file }) {
   const [previewUrl, setPreviewUrl] = useState(null);
+  // Track image loading so we can show a placeholder until it's ready.
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   useEffect(() => {
+    setIsImageLoaded(false);
+
     if (!file) {
       setPreviewUrl(null);
       return;
     }
 
-    // Only create object URLs for images; PDFs show an icon instead.
     if (file.type.startsWith("image/")) {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-      // Clean up the object URL when the file changes or unmounts.
       return () => URL.revokeObjectURL(url);
     } else {
       setPreviewUrl(null);
@@ -23,6 +25,7 @@ function FilePreview({ file }) {
   if (!file) return null;
 
   const isPdf = file.type === "application/pdf";
+  const isImage = file.type.startsWith("image/");
 
   return (
     <div className="preview">
@@ -33,8 +36,26 @@ function FilePreview({ file }) {
         </span>
       </div>
       <div className="preview-body">
-        {previewUrl ? (
-          <img src={previewUrl} alt="プレビュー" className="preview-image" />
+        {isImage ? (
+          <>
+            {/* Placeholder shown until the image finishes loading. */}
+            {!isImageLoaded && (
+              <div className="preview-placeholder">
+                <span className="spinner spinner-dark" />
+                <span>読み込み中...</span>
+              </div>
+            )}
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="プレビュー"
+                className="preview-image"
+                style={{ display: isImageLoaded ? "block" : "none" }}
+                onLoad={() => setTimeout(() => setIsImageLoaded(true), 1000)} 
+                onError={() => setIsImageLoaded(true)}
+              />
+            )}
+          </>
         ) : isPdf ? (
           <div className="preview-pdf">
             <span className="preview-pdf-icon">PDF</span>
