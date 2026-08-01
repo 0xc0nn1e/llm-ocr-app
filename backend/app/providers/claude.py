@@ -4,6 +4,7 @@
 
 
 import base64
+import logging
 
 from anthropic import Anthropic, APIError
 
@@ -48,6 +49,7 @@ _SYSTEM_PROMPT = (
     "OCR・説明・代替テキストはすべて日本語で記述してください。"
 )
 
+logger = logging.getLogger(__name__)
 
 class ClaudeProvider:
     """Analyzes images using Anthropic's Claude vision + tool use."""
@@ -60,6 +62,8 @@ class ClaudeProvider:
         self._max_tokens = settings.anthropic_max_tokens
 
     def analyze_image(self, image_bytes: bytes, media_type: str) -> AnalysisResult:
+
+
         """Analyze a single image and return structured results.
 
         Args:
@@ -101,7 +105,11 @@ class ClaudeProvider:
                 ],
             )
         except APIError as e:
-            raise ProviderError(f"LLM API の呼び出しに失敗しました: {e}")
+            logger.error("Anthropic API call failed: %s", e)
+            # Return a clean, user-facing message (no internal details leaked).
+            raise ProviderError(
+                "LLM API の呼び出しに失敗しました。時間をおいて再度お試しください。"
+            )
 
         # Extract the tool_use block that carries the structured arguments.
         # check the return value have been used the tool or not
@@ -138,4 +146,5 @@ class ClaudeProvider:
             # Validate against our schema; raises if fields are wrong/missing.
             return AnalysisResult.model_validate(tool_input)
         except Exception as e:
-            raise InvalidResponse(f"LLM 応答の形式が不正です: {e}")
+            logger.error("Failed to parse LLM response: %s", e)
+            raise InvalidResponse("LLM 応答の解析に失敗しました。")
