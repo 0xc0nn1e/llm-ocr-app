@@ -1,9 +1,13 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+import logging
+
 from app.config import settings
 from app.errors import AppError
 from app.routers import upload, analyze
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="画像OCR・説明文生成API")
 

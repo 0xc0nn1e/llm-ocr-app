@@ -121,6 +121,15 @@ class ClaudeProvider:
                 "LLM API の呼び出しに失敗しました。時間をおいて再度お試しください。"
             )
 
+        # Log token usage for cost monitoring and tuning max_tokens.
+        logger.info(
+            "Claude usage: input=%s output=%s (limit=%s), images=%s",
+            message.usage.input_tokens,
+            message.usage.output_tokens,
+            self._max_tokens,
+            len(images),
+        )
+        
         # Detect truncation: if the model hit the output limit, the tool
         # arguments will be incomplete (often an empty dict).
         if message.stop_reason == "max_tokens":
