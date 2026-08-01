@@ -376,7 +376,7 @@ code {
 
 .result-title {
   font-size: 18px;
-  margin-bottom: 16px;
+  margin: 0;
 }
 
 .result-section {
@@ -426,4 +426,27 @@ code {
   border: 1px solid var(--accent-border);
   border-radius: 999px;
   padding: 4px 12px;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.copy-button {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.copy-button:hover {
+  opacity: 0.8;
 }
