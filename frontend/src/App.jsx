@@ -6,6 +6,7 @@ import { analyzeFile } from "./api";
 
 // Generate a simple unique id for each selected file.
 let nextId = 1;
+const SHOW_HEALTH = import.meta.env.VITE_SHOW_HEALTH === "true";
 
 function App() {
   const [health, setHealth] = useState({ label: "確認中...", state: "" });
@@ -13,6 +14,9 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
+    // Skip health polling entirely when the indicator is hidden.
+    if (!SHOW_HEALTH) return;
+
     let timeoutId = null;
 
     const checkHealth = async () => {
@@ -161,10 +165,12 @@ function App() {
 
       <footer className="footer">
         <span>画像OCR・説明文生成アプリ</span>
-        <span className="health">
-          <span className={`health-dot ${health.state}`} />
-          バックエンド: {health.label}
-        </span>
+        {SHOW_HEALTH && (              // ← 呢個令佢唔顯示
+          <span className="health">
+            <span className={`health-dot ${health.state}`} />
+            バックエンド: {health.label}
+          </span>
+        )}
       </footer>
     </>
   );
