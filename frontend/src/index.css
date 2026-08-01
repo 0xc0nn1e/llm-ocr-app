@@ -189,3 +189,103 @@ code {
 .health-dot.fail {
   background: #ef4444;
 }
+
+/* ---------- ocr system css ---------- */
+
+/* ---------- Upload zone ---------- */
+
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  margin-top: 16px;
+}
+
+.upload-zone:hover,
+.upload-zone.dragging {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.upload-text {
+  color: var(--text-h);
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.upload-hint {
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--mono);
+}
+
+/* ---------- Preview ---------- */
+
+.preview {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--code-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.preview-name {
+  font-weight: 500;
+  color: var(--text-h);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70%;
+}
+
+.preview-size {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.preview-body {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.preview-pdf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+}
+
+.preview-pdf-icon {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  padding: 12px 20px;
+}

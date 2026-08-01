@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
+import FileUpload from "./components/FileUpload";
+import FilePreview from "./components/FilePreview";
 
 function App() {
   // Backend health status, to confirm the frontend can reach the API.
   const [health, setHealth] = useState({ label: "確認中...", state: "" });
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     // Calls /api/health via the Vite proxy (same-origin, no CORS).
@@ -29,9 +32,8 @@ function App() {
 
         <div className="card">
           <span className="pill">Claude</span>
-          <p className="placeholder">
-            アップロード機能は次のステップで追加します
-          </p>
+          <FileUpload onFileSelect={setSelectedFile} />
+          <FilePreview file={selectedFile} />
         </div>
       </div>
 
