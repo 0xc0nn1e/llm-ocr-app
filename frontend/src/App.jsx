@@ -85,6 +85,25 @@ function App() {
     setIsAnalyzing(false);
   };
 
+  // Re-run analysis for a single item (LLM output varies between runs).
+  const handleRegenerate = async (id) => {
+    const item = items.find((i) => i.id === id);
+    if (!item || isAnalyzing) return;
+
+    updateItem(id, { status: "analyzing", error: null });
+    try {
+      const data = await analyzeFile(item.file);
+      updateItem(id, { status: "done", result: data });
+    } catch (e) {
+      updateItem(id, { status: "error", error: e.message });
+    }
+  };
+
+  // Apply user edits to a result (local only; not sent to the backend).
+  const handleEditResult = (id, updatedResult) => {
+    updateItem(id, { result: updatedResult });
+  };
+
   const pendingCount = items.filter((i) => i.status === "pending").length;
 
   return (
@@ -121,6 +140,8 @@ function App() {
                     key={item.id}
                     item={item}
                     onRemove={handleRemove}
+                    onRegenerate={handleRegenerate}
+                    onEditResult={handleEditResult}
                   />
                 ))}
               </div>

@@ -2,7 +2,6 @@ import FilePreview from "./FilePreview";
 import ResultDisplay from "./ResultDisplay";
 import ErrorMessage from "./ErrorMessage";
 
-// Status label shown next to each file.
 const STATUS_LABEL = {
   pending: "待機中",
   analyzing: "解析中...",
@@ -10,7 +9,7 @@ const STATUS_LABEL = {
   error: "エラー",
 };
 
-function FileItem({ item, onRemove }) {
+function FileItem({ item, onRemove, onRegenerate, onEditResult }) {
   return (
     <div className="file-item">
       <div className="file-item-header">
@@ -32,12 +31,17 @@ function FileItem({ item, onRemove }) {
       {item.status === "analyzing" && (
         <div className="item-loading">
           <span className="spinner spinner-dark" />
-          <span>解析中...</span>
+          <span>アップロード・解析中...</span>
         </div>
       )}
 
       <ErrorMessage message={item.error} />
-      <ResultDisplay result={item.result} />
+      <ResultDisplay
+        result={item.result}
+        onRegenerate={() => onRegenerate(item.id)}
+        onEdit={(updated) => onEditResult(item.id, updated)}
+        isRegenerating={item.status === "analyzing"}
+      />
     </div>
   );
 }
