@@ -12,3 +12,16 @@ services:
       # Bind mount source for live reload; edit on host, runs in container.
       - ./backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      # Bind mount source for live reload; anonymous volume protects node_modules.
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
