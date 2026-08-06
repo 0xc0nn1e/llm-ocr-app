@@ -26,22 +26,28 @@ function FileItem({ item, onRemove, onRegenerate, onEditResult }) {
         </button>
       </div>
 
-      <FilePreview file={item.file} />
-
-      {item.status === "analyzing" && (
-        <div className="item-loading">
-          <span className="spinner spinner-dark" />
-          <span>アップロード・解析中...</span>
+      {/* Split preview and result side by side on wide screens. */}
+      <div className="file-item-body">
+        <div className="file-item-preview">
+          <FilePreview file={item.file} />
         </div>
-      )}
 
-      <ErrorMessage message={item.error} />
-      <ResultDisplay
-        result={item.result}
-        onRegenerate={() => onRegenerate(item.id)}
-        onEdit={(updated) => onEditResult(item.id, updated)}
-        isRegenerating={item.status === "analyzing"}
-      />
+        <div className="file-item-result">
+          {item.status === "analyzing" && (
+            <div className="item-loading">
+              <span className="spinner spinner-dark" />
+              <span>アップロード・解析中...</span>
+            </div>
+          )}
+          <ErrorMessage message={item.error} />
+          <ResultDisplay
+            result={item.result}
+            onRegenerate={() => onRegenerate(item.id)}
+            onEdit={(updated) => onEditResult(item.id, updated)}
+            isRegenerating={item.status === "analyzing"}
+          />
+        </div>
+      </div>
     </div>
   );
 }
